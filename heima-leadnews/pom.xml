@@ -20,6 +20,7 @@
         <module>heima-leadnews-wemedia</module>
         <module>heima-leadnews-seata</module>
         <module>heima-leadnews-wemedia-gateway</module>
+        <module>aliyun-sdk-demo</module>
     </modules>
 
     <!-- 继承Spring boot工程 -->
