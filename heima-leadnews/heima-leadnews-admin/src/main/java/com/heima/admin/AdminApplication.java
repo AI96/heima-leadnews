@@ -9,6 +9,7 @@ import org.springframework.boot.autoconfigure.data.mongo.MongoDataAutoConfigurat
 import org.springframework.boot.autoconfigure.mongo.MongoAutoConfiguration;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.cloud.client.discovery.EnableDiscoveryClient;
+import org.springframework.cloud.openfeign.EnableFeignClients;
 import org.springframework.context.annotation.Bean;
 
 /**
@@ -18,6 +19,7 @@ import org.springframework.context.annotation.Bean;
 @SpringBootApplication(exclude = {MongoAutoConfiguration.class, MongoDataAutoConfiguration.class})
 @MapperScan("com.heima.admin.mapper")
 @EnableDiscoveryClient
+@EnableFeignClients
 public class AdminApplication {
 
     public static void main(String[] args) {

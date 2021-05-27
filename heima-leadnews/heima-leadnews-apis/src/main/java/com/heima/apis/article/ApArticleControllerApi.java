@@ -1,7 +1,6 @@
 package com.heima.apis.article;
 
 import com.heima.model.article.pojos.ApArticle;
-import com.heima.model.common.dtos.ResponseResult;
 
 public interface ApArticleControllerApi {
 
@@ -11,5 +10,4 @@ public interface ApArticleControllerApi {
      * @return
      */
     ApArticle saveArticle(ApArticle apArticle);
-
 }

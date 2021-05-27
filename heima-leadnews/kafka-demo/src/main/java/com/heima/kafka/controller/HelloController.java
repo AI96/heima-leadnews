@@ -15,7 +15,7 @@ public class HelloController {
     public String hello(){
         //第一个参数：topics  
         //第二个参数：消息内容
-        kafkaTemplate.send("hello-itcast","黑马程序员");
+        kafkaTemplate.send("wm_news_auto_scan_topic","1");
         return "ok";
     }
 }

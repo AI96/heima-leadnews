@@ -11,7 +11,7 @@ import java.util.Properties;
  * @author: yp
  */
 public class ProducerDemo {
-    private static final String TOPIC = "itcast-heima";
+    private static final String TOPIC = "wm_news_scan_topic";
 
     public static void main(String[] args) {
         //1.创建配置对象
@@ -23,7 +23,7 @@ public class ProducerDemo {
         //2.创建Producer对象
         KafkaProducer<String, String> producer = new KafkaProducer<String, String>(properties);
         //3.创建消息封装对象
-        ProducerRecord<String, String> record = new ProducerRecord<>(TOPIC, "001","hello...Kafka");
+        ProducerRecord<String, String> record = new ProducerRecord<>(TOPIC,"1");
         //4.发送
         producer.send(record);
         producer.close();

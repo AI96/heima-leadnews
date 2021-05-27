@@ -3,6 +3,12 @@ server:
 spring:
   application:
     name: leadnews-admin
+  kafka:
+    bootstrap-servers: 192.168.211.136:9092
+    consumer:
+      group-id: ${spring.application.name}-kafka-group
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
   datasource:
     driver-class-name: com.mysql.jdbc.Driver
     url: jdbc:mysql://192.168.211.136:3306/leadnews_admin?useUnicode=true&characterEncoding=UTF-8&serverTimezone=UTC
@@ -17,5 +23,7 @@ mybatis-plus:
   mapper-locations: classpath*:mapper/*.xml
   # 设置别名包扫描路径，通过该属性可以给包中的类注册别名
   type-aliases-package: com.heima.model.admin.pojos
-  configuration:
-    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+  #configuration:
+    #log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+#图片访问ip
+fdfs.url: http://192.168.211.136/

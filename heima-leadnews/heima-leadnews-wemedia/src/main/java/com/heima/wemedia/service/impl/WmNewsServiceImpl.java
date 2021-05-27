@@ -6,6 +6,7 @@ import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.heima.common.constans.message.NewsAutoScanConstants;
 import com.heima.common.constans.wemedia.WemediaContans;
 import com.heima.model.common.dtos.PageResponseResult;
 import com.heima.model.common.dtos.ResponseResult;
@@ -25,6 +26,7 @@ import org.apache.commons.lang.StringUtils;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -48,6 +50,55 @@ public class WmNewsServiceImpl extends ServiceImpl<WmNewsMapper, WmNews> impleme
 
     @Autowired
     private WmMaterialMapper wmMaterialMapper;
+
+    /**
+     * 文章的提交
+     * @param dto
+     * @return
+     */
+    @Override
+    public ResponseResult submitNews(WmNewsDto dto) {
+        //1.参数的检查
+        if(dto==null || StringUtils.isEmpty(dto.getContent())){
+            return ResponseResult.errorResult(AppHttpCodeEnum.PARAM_INVALID);
+        }
+
+        //2.封装数据 userId, type(-1需要处理 null) createdTime,images
+        WmUser user = WmThreadLocalUtils.getUser();
+        if(user==null){
+            return ResponseResult.errorResult(AppHttpCodeEnum.TOKEN_EXPIRE);
+        }
+
+        WmNews wmNews = new WmNews();
+        BeanUtils.copyProperties(dto,wmNews);
+        wmNews.setUserId(user.getId());
+        if(WemediaContans.WM_NEWS_AUTO_TYPE.equals(dto.getType())){
+            wmNews.setType(null);
+        }
+        wmNews.setCreatedTime(new Date());
+        List<String> imageList = dto.getImages();
+        if (imageList != null && imageList.size() > 0) {
+            wmNews.setImages(imageList.toString().replace("[", "").
+                    replace("]", "").replace(fileServerUrl, "").replace(" ", ""));
+        }
+
+        //3.保存或者更新文章
+        saveOrUpdateWmNews(wmNews);
+        //4.保存文章图片和素材的关系
+        List<Map> contentMapList = JSON.parseArray(wmNews.getContent(), Map.class);
+        List<String> contentImageList = extractImageFromContent(contentMapList);
+        if (WmNews.Status.SUBMIT.getCode() == wmNews.getStatus() && contentImageList.size() > 0) {
+            //不是草稿
+            saveRelativeInfoForContent(contentImageList, wmNews.getId());
+        }
+
+        //5.保存封面图片和素材的关系
+        if (WmNews.Status.SUBMIT.getCode() == wmNews.getStatus()) {
+            //不是草稿
+            saveRelativeInfoForCover(imageList, wmNews,contentImageList);
+        }
+        return ResponseResult.okResult(null);
+    }
 
     @Override
     public ResponseResult findList(WmNewsPageReqDto dto) {
@@ -134,55 +185,7 @@ public class WmNewsServiceImpl extends ServiceImpl<WmNewsMapper, WmNews> impleme
         return ResponseResult.okResult(null);
     }
 
-    /**
-     * 文章的提交
-     * @param dto
-     * @return
-     */
-    @Override
-    public ResponseResult submitNews(WmNewsDto dto) {
-        //1.参数的检查
-        if(dto==null || StringUtils.isEmpty(dto.getContent())){
-            return ResponseResult.errorResult(AppHttpCodeEnum.PARAM_INVALID);
-        }
 
-        //2.封装数据 userId, type(-1需要处理 null) createdTime,images
-        WmUser user = WmThreadLocalUtils.getUser();
-        if(user==null){
-            return ResponseResult.errorResult(AppHttpCodeEnum.TOKEN_EXPIRE);
-        }
-
-        WmNews wmNews = new WmNews();
-        BeanUtils.copyProperties(dto,wmNews);
-        wmNews.setUserId(user.getId());
-        if(WemediaContans.WM_NEWS_AUTO_TYPE.equals(dto.getType())){
-            wmNews.setType(null);
-        }
-        wmNews.setCreatedTime(new Date());
-        List<String> imageList = dto.getImages();
-        if (imageList != null && imageList.size() > 0) {
-            wmNews.setImages(imageList.toString().replace("[", "").
-                    replace("]", "").replace(fileServerUrl, "").replace(" ", ""));
-        }
-
-        //3.保存或者更新文章
-        saveOrUpdateWmNews(wmNews);
-        //4.保存文章图片和素材的关系
-        List<Map> contentMapList = JSON.parseArray(wmNews.getContent(), Map.class);
-        List<String> contentImageList = extractImageFromContent(contentMapList);
-        if (WmNews.Status.SUBMIT.getCode() == wmNews.getStatus() && contentImageList.size() > 0) {
-            //不是草稿
-            saveRelativeInfoForContent(contentImageList, wmNews.getId());
-        }
-
-        //5.保存封面图片和素材的关系
-        if (WmNews.Status.SUBMIT.getCode() == wmNews.getStatus()) {
-            //不是草稿
-            saveRelativeInfoForCover(imageList, wmNews,contentImageList);
-        }
-
-        return null;
-    }
 
     @Override
     public ResponseResult downOrUp(WmNewsDto dto) {
@@ -279,6 +282,9 @@ public class WmNewsServiceImpl extends ServiceImpl<WmNewsMapper, WmNews> impleme
         }
         return contentImageList;
     }
+
+    @Autowired
+    private KafkaTemplate<String,String> kafkaTemplate;
     /**
      * 保存或者更新news
      * @param wmNews
@@ -297,7 +303,7 @@ public class WmNewsServiceImpl extends ServiceImpl<WmNewsMapper, WmNews> impleme
             flag = save(wmNews);
         }
         if(flag){
-            //TODO 发送消息, 进行文章文章的审核
+            kafkaTemplate.send(NewsAutoScanConstants.WM_NEWS_AUTO_SCAN_TOPIC,JSON.toJSONString(wmNews.getId()));
         }
     }
 }

@@ -2,7 +2,7 @@ package com.heima.article.controller.v1;
 
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.heima.apis.article.AuthorControllerApi;
-import com.heima.article.service.AuthorService;
+import com.heima.article.service.ApAuthorService;
 import com.heima.model.article.pojos.ApAuthor;
 import com.heima.model.common.dtos.ResponseResult;
 import com.heima.model.common.enums.AppHttpCodeEnum;
@@ -14,10 +14,10 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/v1/author")
-public class AuthorController implements AuthorControllerApi {
+public class ApAuthorController implements AuthorControllerApi {
 
     @Autowired
-    private AuthorService authorService;
+    private ApAuthorService authorService;
 
     @GetMapping("/findByUserId/{id}")
     @Override
@@ -37,10 +37,10 @@ public class AuthorController implements AuthorControllerApi {
         return ResponseResult.okResult(AppHttpCodeEnum.SUCCESS);
     }
 
-
+    @GetMapping("/findByWmUserId/{id}")
     @Override
-    public ApAuthor findByWmUserId(Integer wmUserId) {
-        return null;
+    public ApAuthor findByWmUserId(@PathVariable(value = "id") Integer wmUserId) {
+        return authorService.findByWmUserId(wmUserId);
     }
 
 }

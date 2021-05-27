@@ -4,6 +4,7 @@ import com.heima.apis.wemedia.WmNewsControllerApi;
 import com.heima.model.admin.dtos.NewsAuthDto;
 import com.heima.model.common.dtos.PageResponseResult;
 import com.heima.model.common.dtos.ResponseResult;
+import com.heima.model.common.enums.AppHttpCodeEnum;
 import com.heima.model.wemedia.dtos.WmNewsDto;
 import com.heima.model.wemedia.dtos.WmNewsPageReqDto;
 import com.heima.model.wemedia.pojos.WmNews;
@@ -91,9 +92,11 @@ public class WmNewsController implements WmNewsControllerApi {
 
 
 
+    @PostMapping("/update")
     @Override
-    public ResponseResult updateWmNews(WmNews wmNews) {
-        return null;
+    public ResponseResult updateWmNews(@RequestBody WmNews wmNews) {
+        boolean b = wmNewsService.updateById(wmNews);
+        return ResponseResult.okResult(AppHttpCodeEnum.SUCCESS);
     }
 
     @Override
